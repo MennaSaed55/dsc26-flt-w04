@@ -4,14 +4,7 @@ import '../../domain/stop.dart';
 import 'stop_tile.dart';
 import 'sync_banner.dart';
 
-/// Today's stops for one courier.
-///
-/// Keep this constructor. The screen works on a phone, but it has deliberate
-/// problems you must fix (README, Part B): no two-pane layout from 600 px,
-/// 32x32 unlabelled call buttons, rows that overflow at 200% text, a banner
-/// without a proper semantics label, and a status dot that stays on the left
-/// in Arabic.
-class TawseelStopsApp extends StatelessWidget {
+class TawseelStopsApp extends StatefulWidget {
   const TawseelStopsApp({
     super.key,
     required this.stops,
@@ -24,32 +17,99 @@ class TawseelStopsApp extends StatelessWidget {
   final TextDirection textDirection;
 
   @override
+  State<TawseelStopsApp> createState() => _TawseelStopsAppState();
+}
+
+class _TawseelStopsAppState extends State<TawseelStopsApp> {
+  String? _selectedStopId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.stops.isNotEmpty) {
+      _selectedStopId = widget.stops.first.id;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant TawseelStopsApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!widget.stops.any((stop) => stop.id == _selectedStopId)) {
+      _selectedStopId = widget.stops.isNotEmpty ? widget.stops.first.id : null;
+    }
+  }
+
+  void _selectStop(Stop stop) {
+    setState(() {
+      _selectedStopId = stop.id;
+    });
+  }
+
+  Widget _buildStopsList() {
+    return ListView.builder(
+      itemCount: widget.stops.length,
+      itemBuilder: (context, i) {
+        final stop = widget.stops[i];
+
+        return StopTile(
+          key: Key('stop-${stop.id}'),
+          stop: stop,
+          onTap: () => _selectStop(stop),
+          onCall: () {},
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final selectedStop = widget.stops.cast<Stop?>().firstWhere(
+      (stop) => stop?.id == _selectedStopId,
+      orElse: () => null,
+    );
+
     return MaterialApp(
       title: 'Tawseel stops',
       debugShowCheckedModeBanner: false,
       builder: (context, child) =>
-          Directionality(textDirection: textDirection, child: child!),
+          Directionality(textDirection: widget.textDirection, child: child!),
       home: Scaffold(
         appBar: AppBar(title: const Text("Today's stops")),
         body: Column(
           children: [
             SyncBanner(
               key: const Key('sync-banner'),
-              pendingCount: pendingCount,
+              pendingCount: widget.pendingCount,
             ),
             Expanded(
-              child: KeyedSubtree(
-                key: const Key('layout-compact'),
-                child: ListView.builder(
-                  itemCount: stops.length,
-                  itemBuilder: (context, i) => StopTile(
-                    key: Key('stop-${stops[i].id}'),
-                    stop: stops[i],
-                    onTap: () {},
-                    onCall: () {},
-                  ),
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 600) {
+                    return KeyedSubtree(
+                      key: const Key('layout-compact'),
+                      child: _buildStopsList(),
+                    );
+                  }
+
+                  return KeyedSubtree(
+                    key: const Key('layout-expanded'),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 320, child: _buildStopsList()),
+                        const VerticalDivider(width: 1),
+                        Expanded(
+                          child: KeyedSubtree(
+                            key: const Key('stop-detail'),
+                            child: Center(
+                              child: Text(selectedStop?.customerName ?? ''),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],

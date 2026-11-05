@@ -25,46 +25,52 @@ class StopTile extends StatelessWidget {
       StopStatus.delivered => Colors.green.shade700,
       StopStatus.failed => Colors.red.shade700,
     };
-    return SizedBox(
-      height: 64,
+
+    return Material(
       child: InkWell(
         onTap: onTap,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 12,
-              top: 26,
-              child: Container(
-                key: Key('stop-dot-${stop.id}'),
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 64),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 8, 8),
+            child: Row(
+              children: [
+                Container(
+                  key: Key('stop-dot-${stop.id}'),
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        stop.customerName,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(stop.address),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  key: Key('call-${stop.id}'),
+                  tooltip: 'Call ${stop.customerName}',
+                  icon: const Icon(Icons.call, size: 20),
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                  onPressed: onCall,
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 36, right: 48),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(stop.customerName,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(stop.address, maxLines: 1),
-                ],
-              ),
-            ),
-            Positioned(
-              right: 8,
-              top: 16,
-              child: IconButton(
-                key: Key('call-${stop.id}'),
-                icon: const Icon(Icons.call, size: 18),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints.tight(const Size(32, 32)),
-                onPressed: onCall,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -25,29 +25,43 @@ void main() {
   test('recorded outcomes survive a restart', () async {
     final store = InMemoryLocalStore();
     final client = MockClient((_) async => http.Response('', 503));
-    await Outbox(store: store, client: client, baseUrl: base, newId: nextId)
-        .record(delivered('P1', 45000));
-    final reopened =
-        Outbox(store: store, client: client, baseUrl: base, newId: nextId);
+    await Outbox(
+      store: store,
+      client: client,
+      baseUrl: base,
+      newId: nextId,
+    ).record(delivered('P1', 45000));
+    final reopened = Outbox(
+      store: store,
+      client: client,
+      baseUrl: base,
+      newId: nextId,
+    );
     expect((await reopened.pending()).map((e) => e.outcome.parcelId), ['P1']);
   });
 
-  test('sync sends in order with an Idempotency-Key and empties the queue',
-      () async {
-    final keys = <String>[];
-    final client = MockClient((request) async {
-      keys.add(request.headers['Idempotency-Key']!);
-      return http.Response('{}', 201);
-    });
-    final outbox = Outbox(
-        store: InMemoryLocalStore(), client: client, baseUrl: base, newId: nextId);
-    await outbox.record(delivered('P1', 45000));
-    await outbox.record(delivered('P2', 0));
-    final report = await outbox.sync();
-    expect(keys, ['id-1', 'id-2']);
-    expect(report.sent, 2);
-    expect(await outbox.pending(), isEmpty);
-  });
+  test(
+    'sync sends in order with an Idempotency-Key and empties the queue',
+    () async {
+      final keys = <String>[];
+      final client = MockClient((request) async {
+        keys.add(request.headers['Idempotency-Key']!);
+        return http.Response('{}', 201);
+      });
+      final outbox = Outbox(
+        store: InMemoryLocalStore(),
+        client: client,
+        baseUrl: base,
+        newId: nextId,
+      );
+      await outbox.record(delivered('P1', 45000));
+      await outbox.record(delivered('P2', 0));
+      final report = await outbox.sync();
+      expect(keys, ['id-1', 'id-2']);
+      expect(report.sent, 2);
+      expect(await outbox.pending(), isEmpty);
+    },
+  );
 
   test('retryDelay doubles from 5 seconds', () {
     expect(retryDelay(1), const Duration(seconds: 5));
@@ -58,7 +72,9 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     tester.view.physicalSize = const Size(360, 740);
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(TawseelStopsApp(stops: sampleStops, pendingCount: 0));
+    await tester.pumpWidget(
+      const TawseelStopsApp(stops: sampleStops, pendingCount: 0),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('layout-compact')), findsOneWidget);
     tester.view.physicalSize = const Size(800, 1000);
@@ -68,7 +84,9 @@ void main() {
 
   testWidgets('meets tap target and label guidelines', (tester) async {
     final handle = tester.ensureSemantics();
-    await tester.pumpWidget(TawseelStopsApp(stops: sampleStops, pendingCount: 3));
+    await tester.pumpWidget(
+      const TawseelStopsApp(stops: sampleStops, pendingCount: 3),
+    );
     await tester.pumpAndSettle();
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));

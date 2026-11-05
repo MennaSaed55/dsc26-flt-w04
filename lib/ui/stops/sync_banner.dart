@@ -10,11 +10,26 @@ class SyncBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: pendingCount == 0 ? Colors.green.shade100 : Colors.orange.shade100,
-      padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-      child: Text(pendingCount == 0 ? 'Synced' : '$pendingCount pending'),
+    final label = switch (pendingCount) {
+      0 => 'All outcomes synced',
+      1 => '1 outcome waiting to sync',
+      _ => '$pendingCount outcomes waiting to sync',
+    };
+
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          color: pendingCount == 0
+              ? Colors.green.shade100
+              : Colors.orange.shade100,
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8),
+          child: Text(label),
+        ),
+      ),
     );
   }
 }
